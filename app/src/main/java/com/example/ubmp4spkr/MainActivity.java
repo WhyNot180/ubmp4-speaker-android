@@ -34,14 +34,17 @@ public class MainActivity extends AppCompatActivity {
     private final int ENABLE_COARSE_LOCATION_REQUEST_CODE = 2;
     private final int ENABLE_FINE_LOCATION_REQUEST_CODE = 3;
 
+    protected static boolean playIsInstantiated;
+    private PlayActivity playActivity;
+
     private BluetoothManager bluetoothManager;
     private BluetoothAdapter bluetoothAdapter;
     private BluetoothLeScanner bluetoothLeScanner;
     private ScanSettings scanSettings;
-    private BLEScanCallback scanCallback;
-    private BluetoothGatt bleGatt;
-    private BLEGattCallback gattCallback;
-    private BluetoothGattCharacteristic mainBLECharacteristic;
+    protected static BLEScanCallback scanCallback;
+    protected static BluetoothGatt bleGatt;
+    protected static BLEGattCallback gattCallback;
+    protected static BluetoothGattCharacteristic mainBLECharacteristic;
 
     public class BLEGattCallback extends BluetoothGattCallback {
         @Override
@@ -101,11 +104,10 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
-            Log.i("GattCallback", "Successfully notified of characteristic. Value = " + characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0));
-            characteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
-            byte[] lol = {0x01};
-            characteristic.setValue(lol);
-            gatt.writeCharacteristic(characteristic);
+            if (playIsInstantiated) {
+                Log.i("GattCallback", "Successfully notified of characteristic. Value = " + characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0));
+                PlayActivity.checkForValue(characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0));
+            }
         }
 
         @Override

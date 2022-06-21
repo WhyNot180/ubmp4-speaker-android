@@ -1,9 +1,11 @@
 package com.example.ubmp4spkr;
 
+import static com.example.ubmp4spkr.MainActivity.bleGatt;
+import static com.example.ubmp4spkr.MainActivity.mainBLECharacteristic;
+
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
-
-import android.bluetooth.BluetoothGatt;
+;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.os.Build;
 import android.os.Bundle;
@@ -13,26 +15,12 @@ import com.example.ubmp4spkr.MainActivity.*;
 
 public class PlayActivity extends AppCompatActivity {
 
-    private BluetoothGattCharacteristic mainBLECharacteristic;
-    private BLEGattCallback gattCallback;
-    private BluetoothGatt bleGatt;
-    private BLEScanCallback scanCallback;
-
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_play);
-        MainActivity mainActivity = new MainActivity();
-        mainBLECharacteristic = mainActivity.getMainBLECharacteristic();
-        gattCallback = mainActivity.getGattCallback();
-        bleGatt = mainActivity.getBleGatt();
-        scanCallback = mainActivity.getScanCallback();
-
-        mainBLECharacteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
-        byte[] lol = {0x01};
-        mainBLECharacteristic.setValue(lol);
-        bleGatt.writeCharacteristic(mainBLECharacteristic);
+        MainActivity.playIsInstantiated = true;
     }
 
     public void pause(View v) {
@@ -49,5 +37,20 @@ public class PlayActivity extends AppCompatActivity {
         playButton.setEnabled(false);
         findViewById(R.id.pauseButton).setEnabled(true);
         findViewById(R.id.pauseButton).setVisibility(View.VISIBLE);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    public static void checkForValue(Integer value) {
+        mainBLECharacteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
+        switch (value) {
+            case 1:
+                mainBLECharacteristic.setValue(1, BluetoothGattCharacteristic.FORMAT_UINT8, 0);
+                bleGatt.writeCharacteristic(mainBLECharacteristic);
+                break;
+            case 55:
+                mainBLECharacteristic.setValue();
+                bleGatt.writeCharacteristic(mainBLECharacteristic);
+                break;
+        }
     }
 }
