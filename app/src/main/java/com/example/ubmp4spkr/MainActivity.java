@@ -83,10 +83,10 @@ public class MainActivity extends AppCompatActivity {
             boolean supportsNotifications = (mainBLECharacteristic.getProperties() & BluetoothGattCharacteristic.PROPERTY_NOTIFY) == BluetoothGattCharacteristic.PROPERTY_NOTIFY;
             Log.d("GattCallback", "canRead = " + canRead + " canWriteNR = " + canWriteNR + " supportsIndications = " + supportsIndications + " supportsNotifications = " + supportsNotifications);
             if (canRead && canWriteNR && supportsNotifications) {
-                BluetoothGattDescriptor notificationsDescriptor = mainBLECharacteristic.getDescriptor(cCCD);
-                notificationsDescriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-                gatt.writeDescriptor(notificationsDescriptor);
-                gatt.setCharacteristicNotification(mainBLECharacteristic, true);
+                //BluetoothGattDescriptor notificationsDescriptor = mainBLECharacteristic.getDescriptor(cCCD);
+                //notificationsDescriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+                //gatt.writeDescriptor(notificationsDescriptor);
+                //gatt.setCharacteristicNotification(mainBLECharacteristic, true);
                 launchPlay();
             }
         }
@@ -104,10 +104,9 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
-            if (playIsInstantiated) {
-                Log.i("GattCallback", "Successfully notified of characteristic. Value = " + characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0));
-                PlayActivity.checkForValue(characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0));
-            }
+            Log.i("GattCallback", "Successfully notified of characteristic. Value = " + characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0));
+            PlayActivity.checkForValue(characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0));
+
         }
 
         @Override

@@ -27,6 +27,7 @@
         android:background="#19A3E1"
         android:clickable="true"
         android:onClick="play"
+        android:visibility="visible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
