@@ -34,6 +34,9 @@ public class MainActivity extends AppCompatActivity {
     private final int ENABLE_COARSE_LOCATION_REQUEST_CODE = 2;
     private final int ENABLE_FINE_LOCATION_REQUEST_CODE = 3;
 
+    private Integer previousValue = 0;
+    private int timesReceived = 0;
+
     protected static boolean playIsInstantiated;
     private PlayActivity playActivity;
 
@@ -105,8 +108,16 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
             Log.i("GattCallback", "Successfully notified of characteristic. Value = " + characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0));
-            PlayActivity.checkForValue(characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0));
-
+            Integer currentValue = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0);
+            boolean isPrevious = currentValue.equals(previousValue);
+            if (!isPrevious || timesReceived > 5) {
+                PlayActivity.checkForValue(currentValue);
+                Log.d("GattCallback", "timesReceived = " + timesReceived);
+                timesReceived = 0;
+            } else if (isPrevious) {
+                timesReceived++;
+            }
+            previousValue = currentValue;
         }
 
         @Override
