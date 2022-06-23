@@ -34,14 +34,20 @@ public class MainActivity extends AppCompatActivity {
     private final int ENABLE_COARSE_LOCATION_REQUEST_CODE = 2;
     private final int ENABLE_FINE_LOCATION_REQUEST_CODE = 3;
 
+    private Integer previousValue = 0;
+    private int timesReceived = 0;
+
+    protected static boolean playIsInstantiated;
+    private PlayActivity playActivity;
+
     private BluetoothManager bluetoothManager;
     private BluetoothAdapter bluetoothAdapter;
     private BluetoothLeScanner bluetoothLeScanner;
     private ScanSettings scanSettings;
-    private BLEScanCallback scanCallback;
-    private BluetoothGatt bleGatt;
-    private BLEGattCallback gattCallback;
-    private BluetoothGattCharacteristic mainBLECharacteristic;
+    protected static BLEScanCallback scanCallback;
+    protected static BluetoothGatt bleGatt;
+    protected static BLEGattCallback gattCallback;
+    protected static BluetoothGattCharacteristic mainBLECharacteristic;
 
     public class BLEGattCallback extends BluetoothGattCallback {
         @Override
@@ -80,10 +86,10 @@ public class MainActivity extends AppCompatActivity {
             boolean supportsNotifications = (mainBLECharacteristic.getProperties() & BluetoothGattCharacteristic.PROPERTY_NOTIFY) == BluetoothGattCharacteristic.PROPERTY_NOTIFY;
             Log.d("GattCallback", "canRead = " + canRead + " canWriteNR = " + canWriteNR + " supportsIndications = " + supportsIndications + " supportsNotifications = " + supportsNotifications);
             if (canRead && canWriteNR && supportsNotifications) {
-                BluetoothGattDescriptor notificationsDescriptor = mainBLECharacteristic.getDescriptor(cCCD);
-                notificationsDescriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-                gatt.writeDescriptor(notificationsDescriptor);
-                gatt.setCharacteristicNotification(mainBLECharacteristic, true);
+                //BluetoothGattDescriptor notificationsDescriptor = mainBLECharacteristic.getDescriptor(cCCD);
+                //notificationsDescriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+                //gatt.writeDescriptor(notificationsDescriptor);
+                //gatt.setCharacteristicNotification(mainBLECharacteristic, true);
                 launchPlay();
             }
         }
@@ -102,10 +108,16 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
             Log.i("GattCallback", "Successfully notified of characteristic. Value = " + characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0));
-            characteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
-            byte[] lol = {0x01};
-            characteristic.setValue(lol);
-            gatt.writeCharacteristic(characteristic);
+            Integer currentValue = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0);
+            boolean isPrevious = currentValue.equals(previousValue);
+            if (!isPrevious || timesReceived > 5) {
+                PlayActivity.checkForValue(currentValue);
+                Log.d("GattCallback", "timesReceived = " + timesReceived);
+                timesReceived = 0;
+            } else if (isPrevious) {
+                timesReceived++;
+            }
+            previousValue = currentValue;
         }
 
         @Override
