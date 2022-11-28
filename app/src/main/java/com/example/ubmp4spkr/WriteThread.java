@@ -3,27 +3,41 @@ package com.example.ubmp4spkr;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.os.Build;
+import android.os.DeadSystemException;
 import android.util.Log;
 
 import androidx.annotation.RequiresApi;
 
-public class WriteThread implements Runnable{
+public class WriteThread extends Thread{
 
     Integer currentValue;
     private BluetoothGatt bleGatt;
     private BluetoothGattCharacteristic mainBLECharacteristic;
 
-    public WriteThread(Integer value, BluetoothGatt bleGatt, BluetoothGattCharacteristic mainBLECharacteristic) {
-        this.currentValue = value;
+    public WriteThread(BluetoothGatt bleGatt, BluetoothGattCharacteristic mainBLECharacteristic) {
         this.bleGatt = bleGatt;
         this.mainBLECharacteristic = mainBLECharacteristic;
     }
 
     @Override
     public void run() {
-        checkForValue(currentValue);
+        boolean isFinished = false;
+        int rhythmSequence = 0;
+        long startTime = System.nanoTime();
+        while (!isFinished) {
+            //TODO: add proper rhythm code and notifications to UBMP4
+            long elapsedTime = System.nanoTime() - startTime;
+            if (elapsedTime >= rhythm[rhythmSequence]) {
 
+                rhythmSequence++;
+            }
+            if (rhythmSequence == rhythm.length) {
+                isFinished = true;
+            }
+        }
     }
+
+    private static final long[] rhythm = {1000, 1000, 1000, 1000};
 
     private static final long[][] pitches = {{Notes.G.getPitchData(4), Notes.G.getPitchData(4), Notes.D.getPitchData(5), Notes.D.getPitchData(5), Notes.E.getPitchData(5), Notes.E.getPitchData(5), Notes.D.getPitchData(5), 0,                       Notes.C.getPitchData(5), Notes.C.getPitchData(5), Notes.B.getPitchData(4), Notes.B.getPitchData(4), Notes.A.getPitchData(4), Notes.A.getPitchData(4), Notes.G.getPitchData(4)},
             {0,                        Notes.D.getPitchData(4), 0,                       Notes.G.getPitchData(4), 0,                       Notes.G.getPitchData(4), 0,                       Notes.G.getPitchData(4), 0,                       Notes.F.getPitchData(4), 0,                       Notes.G.getPitchData(4), Notes.G.getPitchData(4), Notes.F.getPitchData(4), 0},
@@ -170,5 +184,9 @@ public class WriteThread implements Runnable{
                 Log.e("Note Processing", "VALUE IS NOT RECOGNIZED! " + value);
                 break;
         }
+    }
+
+    public void setCurrentValue(Integer value) {
+        this.currentValue = value;
     }
 }

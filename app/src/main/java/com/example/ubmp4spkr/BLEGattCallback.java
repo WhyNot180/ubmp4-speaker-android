@@ -17,7 +17,7 @@ public class BLEGattCallback extends BluetoothGattCallback {
     protected BluetoothGatt bleGatt;
     protected BluetoothGattCharacteristic mainBLECharacteristic;
 
-    private Integer previousValue = 0;
+    private Integer previousValue;
     private int timesReceived = 0;
 
     public BLEGattCallback(MainActivity mainActivity) {
@@ -64,6 +64,16 @@ public class BLEGattCallback extends BluetoothGattCallback {
             //notificationsDescriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
             //gatt.writeDescriptor(notificationsDescriptor);
             //gatt.setCharacteristicNotification(mainBLECharacteristic, true);
+            boolean isThreadAlive;
+            if (writeThread == null) {
+                writeThread = new WriteThread(bleGatt, mainBLECharacteristic);
+                isThreadAlive = false;
+            } else {
+                isThreadAlive = writeThread.isAlive();
+            }
+            if (!isThreadAlive) {
+                writeThread.start();
+            }
             mainActivity.launchPlay();
         }
     }
@@ -85,12 +95,11 @@ public class BLEGattCallback extends BluetoothGattCallback {
         Integer currentValue = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0);
         boolean isThreadAlive = new Thread(writeThread).isAlive();
         boolean isPrevious = currentValue.equals(previousValue);
-        if (!isThreadAlive && (!isPrevious || timesReceived > 5)) {
-            writeThread = new WriteThread(currentValue, bleGatt, mainBLECharacteristic);
-            new Thread(writeThread).start();
+        if ((!isPrevious || timesReceived > 5)) {
+            writeThread.setCurrentValue(currentValue);
             Log.d("GattCallback", "timesReceived = " + timesReceived);
             timesReceived = 0;
-        } else if (isPrevious && !isThreadAlive) {
+        } else if (isPrevious) {
             timesReceived++;
         }
         previousValue = currentValue;
