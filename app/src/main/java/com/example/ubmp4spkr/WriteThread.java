@@ -21,23 +21,18 @@ public class WriteThread extends Thread{
 
     @Override
     public void run() {
-        boolean isFinished = false;
-        int rhythmSequence = 0;
-        long startTime = System.nanoTime();
-        while (!isFinished) {
-            //TODO: add proper rhythm code and notifications to UBMP4
-            long elapsedTime = System.nanoTime() - startTime;
-            if (elapsedTime >= rhythm[rhythmSequence]) {
+        //TODO: add more rhythm stuff
+        for(int i = 0; i < rhythm.length; i++) {
+            try {
+                sleep(rhythm[i]);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
 
-                rhythmSequence++;
-            }
-            if (rhythmSequence == rhythm.length) {
-                isFinished = true;
-            }
         }
     }
 
-    private static final long[] rhythm = {1000, 1000, 1000, 1000};
+    private static final long[] rhythm = {500, 500, 500, 500, 500, 500, 1000, 500, 500, 500, 500, 500, 500, 500, 1000};
 
     private static final long[][] pitches = {{Notes.G.getPitchData(4), Notes.G.getPitchData(4), Notes.D.getPitchData(5), Notes.D.getPitchData(5), Notes.E.getPitchData(5), Notes.E.getPitchData(5), Notes.D.getPitchData(5), 0,                       Notes.C.getPitchData(5), Notes.C.getPitchData(5), Notes.B.getPitchData(4), Notes.B.getPitchData(4), Notes.A.getPitchData(4), Notes.A.getPitchData(4), Notes.G.getPitchData(4)},
             {0,                        Notes.D.getPitchData(4), 0,                       Notes.G.getPitchData(4), 0,                       Notes.G.getPitchData(4), 0,                       Notes.G.getPitchData(4), 0,                       Notes.F.getPitchData(4), 0,                       Notes.G.getPitchData(4), Notes.G.getPitchData(4), Notes.F.getPitchData(4), 0},
