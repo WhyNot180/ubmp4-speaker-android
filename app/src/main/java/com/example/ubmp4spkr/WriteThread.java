@@ -5,6 +5,7 @@ import android.bluetooth.BluetoothGattCharacteristic;
 import android.os.Build;
 import android.os.DeadSystemException;
 import android.util.Log;
+import android.util.LongSparseArray;
 
 import androidx.annotation.RequiresApi;
 
@@ -14,38 +15,19 @@ public class WriteThread extends Thread{
     private BluetoothGatt bleGatt;
     private BluetoothGattCharacteristic mainBLECharacteristic;
 
-    public WriteThread(BluetoothGatt bleGatt, BluetoothGattCharacteristic mainBLECharacteristic) {
-        this.bleGatt = bleGatt;
-        this.mainBLECharacteristic = mainBLECharacteristic;
-    }
+    private static final long[][] rhythm = {{4, 4, 4, 4, 4, 4, 8, 4, 4, 8, 4, 4, 8, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 16},
+            {16,0, 0, 0, 16,0, 0, 16,0, 0, 16,0, 0, 16,0, 0, 0, 16,0, 0, 0, 8, 0, 8, 0, 16},
+            {16,0, 0 ,0, 16,0, 0, 16,0, 0, 16,0, 0, 16,0, 0, 0, 16,0, 0, 0, 0, 0, 0, 0, 0}};
 
-    @Override
-    public void run() {
-        //TODO: add more rhythm stuff
-        for(int i = 0; i < rhythm.length; i++) {
-            try {
-                sleep(rhythm[i]);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-
-        }
-    }
-
-    private static final long[] rhythm = {500, 500, 500, 500, 500, 500, 1000, 500, 500, 500, 500, 500, 500, 500, 1000};
-
-    private static final long[][] pitches = {{Notes.G.getPitchData(4), Notes.G.getPitchData(4), Notes.D.getPitchData(5), Notes.D.getPitchData(5), Notes.E.getPitchData(5), Notes.E.getPitchData(5), Notes.D.getPitchData(5), 0,                       Notes.C.getPitchData(5), Notes.C.getPitchData(5), Notes.B.getPitchData(4), Notes.B.getPitchData(4), Notes.A.getPitchData(4), Notes.A.getPitchData(4), Notes.G.getPitchData(4)},
-            {0,                        Notes.D.getPitchData(4), 0,                       Notes.G.getPitchData(4), 0,                       Notes.G.getPitchData(4), 0,                       Notes.G.getPitchData(4), 0,                       Notes.F.getPitchData(4), 0,                       Notes.G.getPitchData(4), Notes.G.getPitchData(4), Notes.F.getPitchData(4), 0},
-            {Notes.G.getPitchData(2),  Notes.B.getPitchData(3), Notes.B.getPitchData(2), Notes.D.getPitchData(4), Notes.C.getPitchData(3), Notes.E.getPitchData(4), Notes.B.getPitchData(2), Notes.D.getPitchData(4), Notes.A.getPitchData(2), Notes.C.getPitchData(4), Notes.G.getPitchData(2), Notes.D.getPitchData(4), Notes.D.getPitchData(2), Notes.A.getPitchData(3), Notes.G.getPitchData(2)}};
-
-    private static final byte[][] rhythmEffectData = {{0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x19, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11},
-            {0x19, 0x11, 0x19, 0x11, 0x19, 0x11, 0x19, 0x11, 0x19, 0x11, 0x19, 0x11, 0x11, 0x11, 0x19},
-            {0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11}};
-
-    // Whole, Dotted Half, Half, Dotted Quarter, Quarter, Dotted Eighth, Eighth, Sixteenth
-    private static final byte[] rhythmLengths = {100, 75, 50, 38, 25, 19, 13, 6};
-    private static final byte rhythmSilence = 1;
-    private static int[] noteIndexes = { 0, 0, 0 };
+    private static final long[][] pitches = {{Notes.E.getPitchData(4), Notes.D.getPitchData(4), Notes.C.getPitchData(4), Notes.D.getPitchData(4), Notes.E.getPitchData(4), Notes.E.getPitchData(4), Notes.E.getPitchData(4), Notes.D.getPitchData(4), Notes.D.getPitchData(4), Notes.D.getPitchData(4), Notes.E.getPitchData(4), Notes.G.getPitchData(4), Notes.G.getPitchData(4), Notes.E.getPitchData(4), Notes.D.getPitchData(4), Notes.C.getPitchData(4), Notes.D.getPitchData(4), Notes.E.getPitchData(4), Notes.E.getPitchData(4), Notes.E.getPitchData(4), Notes.E.getPitchData(4), Notes.D.getPitchData(4), Notes.D.getPitchData(4), Notes.E.getPitchData(4), Notes.D.getPitchData(4), Notes.C.getPitchData(4)},
+            {Notes.E.getPitchData(3), Notes.E.getPitchData(3), Notes.F.getPitchData(3), Notes.E.getPitchData(3), Notes.E.getPitchData(3), Notes.E.getPitchData(3), Notes.G.getPitchData(3), Notes.G.getPitchData(2), Notes.C.getPitchData(2)},
+            {Notes.C.getPitchData(3), Notes.C.getPitchData(3), Notes.B.getPitchData(2), Notes.C.getPitchData(3), Notes.C.getPitchData(3), Notes.C.getPitchData(3)}};
+    private static final byte[][] effects = {{4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4},
+            {4, 4, 4, 4, 4, 4, 4, 4, 4},
+            {4, 4, 4, 4, 4, 4}};
+    // ((BPM * 1000)/60) / BASE
+    // for base: 1 = 1/16, 1.5 = 3/32, 2 = 1/8, 3 = 3/16 etc...
+    private static final long sixteenthNoteDuration = ((120 * 1000)/60) / 4;
 
     enum Notes {
         C (2935780),
@@ -67,13 +49,46 @@ public class WriteThread extends Thread{
             this.lowerNotePeriod = lowerNotePeriod;
         }
 
-        long getPitchData(long something) {
-            if (something > 6) {
+        long getPitchData(long octave) {
+            if (octave > 6) {
                 Log.e("Note Processing", "WARNING: OCTAVE IS TOO HIGH");
             }
-            return this.lowerNotePeriod / (1 << something) / 1000;
+            return this.lowerNotePeriod / (1L << octave) / 1000;
         }
     }
+
+    public WriteThread(BluetoothGatt bleGatt, BluetoothGattCharacteristic mainBLECharacteristic) {
+        this.bleGatt = bleGatt;
+        this.mainBLECharacteristic = mainBLECharacteristic;
+    }
+
+    @Override
+    public void run() {
+        //TODO: add more rhythm stuff
+        int[] pitchCounters = {0, 0, 0};
+        for(int i = 0; i < rhythm.length; i++) {
+            long minRhythm = Math.min(rhythm[0][i], Math.min(rhythm[1][i], rhythm[2][i]));
+            if ((rhythm[0][i] != 0) || pitchCounters[0] != pitches[0].length) {
+                pitchCounters[0]++;
+                sendNotes(0, pitchCounters[0]);
+            }
+            if ((rhythm[1][i] != 0) || pitchCounters[1] != pitches[1].length) {
+                pitchCounters[1]++;
+                sendNotes(1, pitchCounters[1]);
+            }
+            if ((rhythm[2][i] != 0) || pitchCounters[2] != pitches[2].length) {
+                pitchCounters[2]++;
+                sendNotes(2, pitchCounters[2]);
+            }
+            try {
+                sleep(minRhythm * sixteenthNoteDuration);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+
 
     private void sendValue(byte value) {
         byte[] byteValue = {value};
@@ -82,103 +97,35 @@ public class WriteThread extends Thread{
         bleGatt.writeCharacteristic(mainBLECharacteristic);
     }
 
-    private void sendRhythm(Integer value) {
-        switch (value) {
-            case 55:
-                sendValue(rhythmLengths[0]);
-                break;
-            case 54:
-                sendValue(rhythmLengths[1]);
-                break;
-            case 53:
-                sendValue(rhythmLengths[2]);
-                break;
-            case 52:
-                sendValue(rhythmLengths[3]);
-                break;
-            case 51:
-                sendValue(rhythmLengths[4]);
-                break;
-            case 50:
-                sendValue(rhythmLengths[5]);
-                break;
-            case 49:
-                sendValue(rhythmLengths[6]);
-                break;
-            case 48:
-                sendValue(rhythmLengths[7]);
-                break;
-            default:
-                Log.e("Note Processing", "RHYTHM NOT FOUND!");
-                break;
+    private void sendNotes(int channel, int noteIndex) {
+        sendValue((byte)channel);
+        while (currentValue != 0) {
+            try {
+                wait();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
-    }
 
-    private void sendRhythmEffectData(Integer value) {
-        switch (value) {
-            case 88:
-                sendValue(rhythmEffectData[0][noteIndexes[0]]);
-                break;
-            case 89:
-                sendValue(rhythmEffectData[1][noteIndexes[1]]);
-                break;
-            case 90:
-                sendValue(rhythmEffectData[2][noteIndexes[2]]);
-                break;
+        sendValue(effects[channel][noteIndex]);
+        while (currentValue != 1) {
+            try {
+                wait();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.M)
-    public void checkForValue(Integer value) {
-        switch (value) {
-            case 97:
-                sendValue((byte)(pitches[0][noteIndexes[0]] >> 8));
-                break;
-            case 98:
-                sendValue((byte)(pitches[0][noteIndexes[0]] & 0xFF));
-                if (noteIndexes[0] != 15) {
-                    noteIndexes[0]++;
-                }
-                break;
-            case 99:
-                sendValue((byte)(pitches[1][noteIndexes[1]] >> 8));
-                break;
-            case 100:
-                sendValue((byte)(pitches[1][noteIndexes[1]] & 0xFF));
-                noteIndexes[1]++;
-                break;
-            case 101:
-                sendValue((byte)(pitches[2][noteIndexes[2]] >> 8));
-                break;
-            case 102:
-                sendValue((byte)(pitches[2][noteIndexes[2]] & 0xFF));
-                noteIndexes[2]++;
-                break;
-            case 88:
-            case 89:
-            case 90:
-                sendRhythmEffectData(value);
-                break;
-            case 1:
-                sendValue((byte)1);
-                Log.d("Note Processing", "sent 1");
-                break;
-            case 55:
-            case 54:
-            case 53:
-            case 52:
-            case 51:
-            case 50:
-            case 49:
-            case 48:
-                sendRhythm(value);
-                break;
-            case 58:
-                sendValue(rhythmSilence);
-            default:
-                Log.e("Note Processing", "VALUE IS NOT RECOGNIZED! " + value);
-                break;
+        byte highPitch = (byte) ((byte) (pitches[channel][noteIndex] >> 8));
+        sendValue(highPitch);
+        while (currentValue != 2) {
+            try {
+                wait();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
+        byte lowPitch = (byte) ((byte) (pitches[channel][noteIndex] & 0x00FF));
+        sendValue(lowPitch);
     }
 
     public void setCurrentValue(Integer value) {

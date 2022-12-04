@@ -97,6 +97,7 @@ public class BLEGattCallback extends BluetoothGattCallback {
         boolean isPrevious = currentValue.equals(previousValue);
         if ((!isPrevious || timesReceived > 5)) {
             writeThread.setCurrentValue(currentValue);
+            writeThread.notify();
             Log.d("GattCallback", "timesReceived = " + timesReceived);
             timesReceived = 0;
         } else if (isPrevious) {
