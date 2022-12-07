@@ -114,4 +114,25 @@ public class BLEGattCallback extends BluetoothGattCallback {
             Log.e("GattCallback", "Failed to enable notifications: " + status);
         }
     }
+
+    public void threadWait() {
+        if (writeThread != null) {
+            if (writeThread.isAlive()) {
+                while (writeThread.isInterrupted()) ;
+                try {
+                    writeThread.wait();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    public void threadNotify() {
+        if (writeThread != null) {
+            if (writeThread.isAlive() && writeThread.isInterrupted()) {
+                writeThread.notify();
+            }
+        }
+    }
 }
