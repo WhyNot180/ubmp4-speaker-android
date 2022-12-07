@@ -1,17 +1,20 @@
 package com.example.ubmp4spkr;
 
+import static com.example.ubmp4spkr.MainActivity.gattCallback;
+
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.os.Build;
 import android.os.DeadSystemException;
 import android.util.Log;
 import android.util.LongSparseArray;
+import com.example.ubmp4spkr.MainActivity;
 
 import androidx.annotation.RequiresApi;
 
 public class WriteThread extends Thread{
 
-    Integer currentValue;
+    Integer currentValue = -1;
     private BluetoothGatt bleGatt;
     private BluetoothGattCharacteristic mainBLECharacteristic;
 
@@ -100,29 +103,19 @@ public class WriteThread extends Thread{
     private void sendNotes(int channel, int noteIndex) {
         sendValue((byte)channel);
         while (currentValue != 0) {
-            try {
-                wait();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            Log.d("Notes", "sent channel 0");
+            gattCallback.threadWait();
         }
 
         sendValue(effects[channel][noteIndex]);
         while (currentValue != 1) {
-            try {
-                wait();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            Log.d("Notes", "sent channel 1");
+            gattCallback.threadWait();
         }
         byte highPitch = (byte) ((byte) (pitches[channel][noteIndex] >> 8));
         sendValue(highPitch);
         while (currentValue != 2) {
-            try {
-                wait();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            gattCallback.threadWait();
         }
         byte lowPitch = (byte) ((byte) (pitches[channel][noteIndex] & 0x00FF));
         sendValue(lowPitch);

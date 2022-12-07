@@ -5,14 +5,18 @@ import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothProfile;
+import android.content.Intent;
 import android.util.Log;
+import com.example.ubmp4spkr.MainActivity;
 
 import java.util.UUID;
+import java.util.concurrent.ArrayBlockingQueue;
 
 public class BLEGattCallback extends BluetoothGattCallback {
 
-    private MainActivity mainActivity;
     private WriteThread writeThread;
+
+    private PlayActivity playActivity;
 
     protected BluetoothGatt bleGatt;
     protected BluetoothGattCharacteristic mainBLECharacteristic;
@@ -20,8 +24,8 @@ public class BLEGattCallback extends BluetoothGattCallback {
     private Integer previousValue;
     private int timesReceived = 0;
 
-    public BLEGattCallback(MainActivity mainActivity) {
-        this.mainActivity = mainActivity;
+    public void transferActivity(PlayActivity playActivity) {
+        this.playActivity = playActivity;
     }
 
     @Override
@@ -74,7 +78,8 @@ public class BLEGattCallback extends BluetoothGattCallback {
             if (!isThreadAlive) {
                 writeThread.start();
             }
-            mainActivity.launchPlay();
+            //Intent i = new Intent(, PlayActivity.class);
+            //playActivity.getApplicationContext().startActivity(i);
         }
     }
 
@@ -119,20 +124,26 @@ public class BLEGattCallback extends BluetoothGattCallback {
         if (writeThread != null) {
             if (writeThread.isAlive()) {
                 while (writeThread.isInterrupted()) ;
-                try {
-                    writeThread.wait();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+                synchronized(writeThread) {
+                    try {
+                        writeThread.wait();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         }
+        Log.d("Notes", "waiting");
     }
 
     public void threadNotify() {
         if (writeThread != null) {
             if (writeThread.isAlive() && writeThread.isInterrupted()) {
-                writeThread.notify();
+                synchronized(writeThread) {
+                    writeThread.notify();
+                }
             }
         }
+        Log.d("Notes", "Notified");
     }
 }

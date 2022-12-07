@@ -30,7 +30,7 @@ import java.util.UUID;
 @RequiresApi(api = Build.VERSION_CODES.M)
 public class MainActivity extends AppCompatActivity {
 
-    private MainActivity mainActivity;
+    public static MainActivity mainActivity;
 
     private final int ENABLE_BLUETOOTH_REQUEST_CODE = 1;
     private int ENABLE_BLUETOOTH_RESULT_CODE;
@@ -89,12 +89,14 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         mainActivity = new MainActivity();
+        playActivity = new PlayActivity();
         bluetoothManager = getSystemService(BluetoothManager.class);
         bluetoothAdapter = bluetoothManager.getAdapter();
         bluetoothLeScanner = bluetoothAdapter.getBluetoothLeScanner();
         scanSettings = new ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).build();
         scanCallback = new BLEScanCallback();
-        gattCallback = new BLEGattCallback(mainActivity);
+        gattCallback = new BLEGattCallback();
+        gattCallback.transferActivity(playActivity);
         findViewById(R.id.scanButton).setOnClickListener(v -> {
             if (isScanning) {
                 stopBLEScan();
@@ -188,5 +190,9 @@ public class MainActivity extends AppCompatActivity {
     public void launchPlay(){
         Intent i = new Intent(this, PlayActivity.class);
         startActivity(i);
+    }
+
+    public static void playLaunch() {
+        mainActivity.launchPlay();
     }
 }
