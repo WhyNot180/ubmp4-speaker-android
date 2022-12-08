@@ -26,12 +26,12 @@ public class WriteThread extends Thread{
     private static final long[][] pitches = {{Notes.E.getPitchData(4), Notes.D.getPitchData(4), Notes.C.getPitchData(4), Notes.D.getPitchData(4), Notes.E.getPitchData(4), Notes.E.getPitchData(4), Notes.E.getPitchData(4), Notes.D.getPitchData(4), Notes.D.getPitchData(4), Notes.D.getPitchData(4), Notes.E.getPitchData(4), Notes.G.getPitchData(4), Notes.G.getPitchData(4), Notes.E.getPitchData(4), Notes.D.getPitchData(4), Notes.C.getPitchData(4), Notes.D.getPitchData(4), Notes.E.getPitchData(4), Notes.E.getPitchData(4), Notes.E.getPitchData(4), Notes.E.getPitchData(4), Notes.D.getPitchData(4), Notes.D.getPitchData(4), Notes.E.getPitchData(4), Notes.D.getPitchData(4), Notes.C.getPitchData(4)},
             {Notes.E.getPitchData(3), Notes.E.getPitchData(3), Notes.F.getPitchData(3), Notes.E.getPitchData(3), Notes.E.getPitchData(3), Notes.E.getPitchData(3), Notes.G.getPitchData(3), Notes.G.getPitchData(2), Notes.C.getPitchData(2)},
             {Notes.C.getPitchData(3), Notes.C.getPitchData(3), Notes.B.getPitchData(2), Notes.C.getPitchData(3), Notes.C.getPitchData(3), Notes.C.getPitchData(3)}};
-    private static final byte[][] effects = {{4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4},
+    private static final byte[][] effects = {{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
             {4, 4, 4, 4, 4, 4, 4, 4, 4},
             {4, 4, 4, 4, 4, 4}};
     // ((BPM * 1000)/60) / BASE
     // for base: 1 = 1/16, 1.5 = 3/32, 2 = 1/8, 3 = 3/16 etc...
-    private static final long sixteenthNoteDuration = ((120 * 1000)/60) / 4;
+    private static final long sixteenthNoteDuration = ((60 * 1000)/60) / 4;
 
     enum Notes {
         C (2935780),
@@ -74,8 +74,8 @@ public class WriteThread extends Thread{
         for(int i = 0; i < rhythm[0].length; i++) {
             long minRhythm = rhythm[0][i];//Math.min(rhythm[0][i], Math.min(rhythm[1][i], rhythm[2][i]));
             if ((rhythm[0][i] != 0) || pitchCounters[0] != pitches[0].length) {
-                pitchCounters[0]++;
                 sendNotes(0, pitchCounters[0]);
+                pitchCounters[0]++;
             }
 //            try {
 //                sleep(10);
