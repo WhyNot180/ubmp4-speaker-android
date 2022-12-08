@@ -17,6 +17,7 @@ public class WriteThread extends Thread{
     Integer currentValue = -1;
     private BluetoothGatt bleGatt;
     private BluetoothGattCharacteristic mainBLECharacteristic;
+    final Object syncToken;
 
     private static final long[][] rhythm = {{4, 4, 4, 4, 4, 4, 8, 4, 4, 8, 4, 4, 8, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 16},
             {16,0, 0, 0, 16,0, 0, 16,0, 0, 16,0, 0, 16,0, 0, 0, 16,0, 0, 0, 8, 0, 8, 0, 16},
@@ -60,34 +61,47 @@ public class WriteThread extends Thread{
         }
     }
 
-    public WriteThread(BluetoothGatt bleGatt, BluetoothGattCharacteristic mainBLECharacteristic) {
+    public WriteThread(BluetoothGatt bleGatt, BluetoothGattCharacteristic mainBLECharacteristic, Object syncToken) {
         this.bleGatt = bleGatt;
         this.mainBLECharacteristic = mainBLECharacteristic;
+        this.syncToken = syncToken;
     }
 
     @Override
     public void run() {
         //TODO: add more rhythm stuff
         int[] pitchCounters = {0, 0, 0};
-        for(int i = 0; i < rhythm.length; i++) {
-            long minRhythm = Math.min(rhythm[0][i], Math.min(rhythm[1][i], rhythm[2][i]));
+        for(int i = 0; i < rhythm[0].length; i++) {
+            long minRhythm = rhythm[0][i];//Math.min(rhythm[0][i], Math.min(rhythm[1][i], rhythm[2][i]));
             if ((rhythm[0][i] != 0) || pitchCounters[0] != pitches[0].length) {
                 pitchCounters[0]++;
                 sendNotes(0, pitchCounters[0]);
             }
-            if ((rhythm[1][i] != 0) || pitchCounters[1] != pitches[1].length) {
-                pitchCounters[1]++;
-                sendNotes(1, pitchCounters[1]);
-            }
-            if ((rhythm[2][i] != 0) || pitchCounters[2] != pitches[2].length) {
-                pitchCounters[2]++;
-                sendNotes(2, pitchCounters[2]);
-            }
+//            try {
+//                sleep(10);
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//            }
+//            if ((rhythm[1][i] != 0) || pitchCounters[1] != pitches[1].length) {
+//                pitchCounters[1]++;
+//                sendNotes(1, pitchCounters[1]);
+//            }
+//            try {
+//                sleep(10);
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//            }
+//            if ((rhythm[2][i] != 0) || pitchCounters[2] != pitches[2].length) {
+//                pitchCounters[2]++;
+//                sendNotes(2, pitchCounters[2]);
+//            }
             try {
+                Log.d("Notes", "sleeping");
                 sleep(minRhythm * sixteenthNoteDuration);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+            Log.d("Notes", "sleep finished");
         }
     }
 
@@ -103,19 +117,39 @@ public class WriteThread extends Thread{
     private void sendNotes(int channel, int noteIndex) {
         sendValue((byte)channel);
         while (currentValue != 0) {
-            Log.d("Notes", "sent channel 0");
-            gattCallback.threadWait();
+            Log.d("Notes", "sent channel " + channel);
+            synchronized(syncToken) {
+                try {
+                    syncToken.wait();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
         }
 
         sendValue(effects[channel][noteIndex]);
         while (currentValue != 1) {
-            Log.d("Notes", "sent channel 1");
-            gattCallback.threadWait();
+            Log.d("Notes", "sent effects");
+
+            synchronized(syncToken) {
+                try {
+                    syncToken.wait();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
         }
         byte highPitch = (byte) ((byte) (pitches[channel][noteIndex] >> 8));
         sendValue(highPitch);
         while (currentValue != 2) {
-            gattCallback.threadWait();
+            Log.d("Notes", "sent pitch");
+            synchronized(syncToken) {
+                try {
+                    syncToken.wait();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
         }
         byte lowPitch = (byte) ((byte) (pitches[channel][noteIndex] & 0x00FF));
         sendValue(lowPitch);

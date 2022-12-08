@@ -23,6 +23,7 @@ public class BLEGattCallback extends BluetoothGattCallback {
 
     private Integer previousValue;
     private int timesReceived = 0;
+    final Object syncToken = new Object();
 
     public void transferActivity(PlayActivity playActivity) {
         this.playActivity = playActivity;
@@ -64,20 +65,20 @@ public class BLEGattCallback extends BluetoothGattCallback {
         boolean supportsNotifications = (mainBLECharacteristic.getProperties() & BluetoothGattCharacteristic.PROPERTY_NOTIFY) == BluetoothGattCharacteristic.PROPERTY_NOTIFY;
         Log.d("GattCallback", "canRead = " + canRead + " canWriteNR = " + canWriteNR + " supportsIndications = " + supportsIndications + " supportsNotifications = " + supportsNotifications);
         if (canRead && canWriteNR && supportsNotifications) {
-            //BluetoothGattDescriptor notificationsDescriptor = mainBLECharacteristic.getDescriptor(cCCD);
-            //notificationsDescriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-            //gatt.writeDescriptor(notificationsDescriptor);
-            //gatt.setCharacteristicNotification(mainBLECharacteristic, true);
-            boolean isThreadAlive;
-            if (writeThread == null) {
-                writeThread = new WriteThread(bleGatt, mainBLECharacteristic);
-                isThreadAlive = false;
-            } else {
-                isThreadAlive = writeThread.isAlive();
-            }
-            if (!isThreadAlive) {
-                writeThread.start();
-            }
+            BluetoothGattDescriptor notificationsDescriptor = mainBLECharacteristic.getDescriptor(cCCD);
+            notificationsDescriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+            gatt.writeDescriptor(notificationsDescriptor);
+            gatt.setCharacteristicNotification(mainBLECharacteristic, true);
+//            boolean isThreadAlive;
+//            if (writeThread == null) {
+//                writeThread = new WriteThread(bleGatt, mainBLECharacteristic, syncToken);
+//                isThreadAlive = false;
+//            } else {
+//                isThreadAlive = writeThread.isAlive();
+//            }
+//            if (!isThreadAlive) {
+//                writeThread.start();
+//            }
             //Intent i = new Intent(, PlayActivity.class);
             //playActivity.getApplicationContext().startActivity(i);
         }
@@ -98,11 +99,10 @@ public class BLEGattCallback extends BluetoothGattCallback {
     public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
         Log.i("GattCallback", "Successfully notified of characteristic. Value = " + characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0));
         Integer currentValue = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0);
-        boolean isThreadAlive = new Thread(writeThread).isAlive();
         boolean isPrevious = currentValue.equals(previousValue);
         if ((!isPrevious || timesReceived > 5)) {
+            threadNotify();
             writeThread.setCurrentValue(currentValue);
-            writeThread.notify();
             Log.d("GattCallback", "timesReceived = " + timesReceived);
             timesReceived = 0;
         } else if (isPrevious) {
@@ -115,6 +115,16 @@ public class BLEGattCallback extends BluetoothGattCallback {
     public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
         if (status == BluetoothGatt.GATT_SUCCESS) {
             Log.i("GattCallback", "Successfully enabled notifications");
+            boolean isThreadAlive;
+            if (writeThread == null) {
+                writeThread = new WriteThread(bleGatt, mainBLECharacteristic, syncToken);
+                isThreadAlive = false;
+            } else {
+                isThreadAlive = writeThread.isAlive();
+            }
+            if (!isThreadAlive) {
+                writeThread.start();
+            }
         } else {
             Log.e("GattCallback", "Failed to enable notifications: " + status);
         }
@@ -124,9 +134,9 @@ public class BLEGattCallback extends BluetoothGattCallback {
         if (writeThread != null) {
             if (writeThread.isAlive()) {
                 while (writeThread.isInterrupted()) ;
-                synchronized(writeThread) {
+                synchronized(syncToken) {
                     try {
-                        writeThread.wait();
+                        syncToken.wait();
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -138,12 +148,13 @@ public class BLEGattCallback extends BluetoothGattCallback {
 
     public void threadNotify() {
         if (writeThread != null) {
-            if (writeThread.isAlive() && writeThread.isInterrupted()) {
-                synchronized(writeThread) {
-                    writeThread.notify();
+            if (writeThread.isAlive()) {
+                synchronized(syncToken) {
+                    syncToken.notify();
+                    Log.d("Notes", "Notified");
                 }
             }
         }
-        Log.d("Notes", "Notified");
+
     }
 }
